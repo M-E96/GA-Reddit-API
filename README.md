@@ -1,168 +1,40 @@
-# ![](https://ga-dash.s3.amazonaws.com/production/assets/logo-9f88ae6c9c3871690e33280fcf557f33.png) Project 3: Web APIs & NLP
+# Project 3 - Reddit NLP
 
-### Description
+The aim of this project was to build a classification model/s that could accuractely predict which posts were from which subreddit, and then compare the two to see which was preferred. To do this, we also needed to scrape Reddit with use of an API and PRAW. After this, we would use natural language processing to treat the raw text as data to use in building our models.
 
-In week four we learned about a few different classifiers. In week five we're learning about webscraping, APIs, and Natural Language Processing (NLP). This project will put those skills to the test.
+We would first look through the posts, through some NLP, to see if there were any identifiers/key points to note that may affect our modeling. Cleaning is done in this step as well, as to preprocess the text, we would have to transform it into data we can parse through methods and processes.
 
-For project 3, your goal is two-fold:
-1. Using [PRAW](https://praw.readthedocs.io/en/stable/index.html), you'll collect posts from two subreddits of your choosing.
-2. You'll then use NLP to train a classifier on which subreddit a given post came from. This is a binary classification problem.
+Having made our models, we compare the two to see which performed better, and outline anything we could have done to improve, or note anything we think our project may have lacked.
 
+### Data
 
-#### About the API
+As opposed to other datasets, since we are using text, there isn't really a data frame to cite, as we are essentially creating our own dataframe from the multitude of posts we scrape from Reddit via PRAW and API.
 
-For this project, you will be using [PRAW](https://praw.readthedocs.io/en/stable/index.html) to collect posts from two different subreddits. 
+So our final data we use, would actually just be a dataframe of texts, posing as posts, and already classified to their respective subreddits.
 
-To help you get started, we have a [notebook](./Reddit-PRAW-tutorial.ipynb) detailing the process of creating an app and obtaining your API credentials.
+## Executive Summary
+ - First we had to collect our data, through use of PRAW and Reddit API. We use praw as reddit has a scraping limit of 100 per request, so through pagination, we were able to pull 1000 posts in one seemless go, as the PRAW would make multiple requests, then combine them into one dataset to use.
+ - We used an .env file to hide our confidential keys and passwords, then loaded them using os. Then using praw, we accessed our Reddit API and loaded up our posts from the subreddits.
+ - A problem we encountered was a max scraping limit, which was also compounded by a UI limit, of 1000 total posts, and this project was to collect at least 1000. Simply scraping through different categorisation of posts would allow us to join them and remove duplicates, as with a big subreddit, they are dealing with tons of posts on average over a short span of time.
+ - Whilst scraping, took this from the project notes given by GA, adding a UTC timer to our scraping allowed us to see whether there was overlap with our pulls, potentially reducing the amount of duplicates, which we would then take care of later anyways, but was an easy way to deal with. Although, simply removing duplicates by title, but the UTC timer is more for the pagination method I talk about earlier, which helps with identifying where to start from for the API. So does not inherently remove duplicates, but potentially reduces the amount of them to begin with.
+ - We cleaned the data, by removing duplicates by title, which makes sense, and then filling in the self-text/posts column with the title, as I noticed that people formatted their posts in this manner, using the title as the post itself, but then putting images in the post body.
+ - As we said earlier, we put scraped 2 different categorisation of posts from each subreddit, to exceed the 1000 post limit. We simply concatenated them vertically then removed unnecessary columns for ease.
+ - Here we get to a split, we used CountVectorizing for the individual EDA of subreddits, for we treated all the posts as relevant, but then Tfidf Vectorized for the total dataframe(both subreddits concatenated together) for indirectly, it would help with feature engineering for the model.
+ - During EDA of the individual subreddits, we identified trends in key words, as well as the spread of those key words. Which proved to show some interesting connection to our model later.
+ - Sentiment Analysed the posts of each subreddit to mark how "positive" each one was, with the given assumption that people love pizza more, but it turns out sourdough users are more likely to use positive language than pizza users, perhaps indicating their love for sourdough was greater and concentrated.
+ - Creating our models was relatively simple, set up a pipeline and gridsearch so that we could preprocess and instantiate our models onto our data simultaneously. Added in some parameters to consider, but here we encountered an error, which adds to the point of simple language, that raising hte min-df, actually created not enough data points for our model to work from. Hence from here, I decided not to lemmatize/stem and raise min-df, for simple/informal language was what we were working with, and simplifying it further potentially lost us our nuances and data.
+ - After our model creation, is when we started to explore how the model was built, given our EDA into the individual subreddits, and I assumed that our model was overfit/oversimple due to the informal language, and that ambiguity perhaps favoured one classification over another, due to it being slightly more varied/complicated than the other, sourdough vs pizza.
+## Conclusion and Considerations
+We found that the Logistic Regression model performed marginally better in almost all accounts, except for specificity. Beyond this, we found that the potentially the spread of, or lack of, key words worked against the pizza classifying class, and favoured ambiguous posts towards sourdough, or at least we theorise. Testing this with our list of ambiguous words, this was the case, but obviously this is too small a sample size to conclusively say, but the model definitely shows traits of this. 
 
-Note: Rather than working in this template notebook, make a brand new "scraping" notebook (or script), with your own unique work and comments, so you can use this project in a portfolio!
+I'd say, that overall, I achieved a decently performing model, which performs above 40% points better than our baseline accuracy, which was 50%. I can't complain about this score, but the metrics do show some overfitting, perhaps due to the simplicity of language in forum posts. Approaching this as a datascientist, we can always strive to aim for better predictive/classifying modeling and accuracy. There were definitely things to improve, which I shall outline.
 
----
+First I'd like to outline that perhaps I approached this project too simply, for I just couldn't shake the feeling that I was finding things either too easily or even just settling for simple answers.
 
-### Requirements
+One thing I would note, is that our work around the 1000 post limit, is fine, but really only works on huge subreddits. Taking advantage of the different categories only work if there aren't many overlaps, which there weren't but that is because I chose big subreddits. When initially going through smaller ones, such as r/espresso and r/coffee, these workarounds wouldn't work; for there weren't enough posts which meant tons of overlap amongst the categories.
 
-- Gather and prepare your data using PRAW.
-- **Create and compare two models**. Any two classifiers at least of your choosing: random forest, logistic regression, KNN, SVM, etc.
-- A Jupyter Notebook with your analysis for a peer audience of data scientists.
-- An executive summary of your results.
-- A short presentation (5-8 minutes) outlining your process and findings for a semi-technical audience.
+Whilst I did create a pretty accurate classification model, I feel as though I could have considered more classification models that may have worked better, such as random forest classification.
 
-**Pro Tip:** You can find a good example executive summary [here](https://www.proposify.biz/blog/executive-summary).
+Regarding my point on ambiguous posts, and perhaps model favouring sourdough in these circumstances, whilst the graph of key word spread could indicate this, our test definitely had flaws inherently, for the list of words we used may all just be higher on the list of sourdough top words as opposed to pizza, which would also explain the result.
 
----
-
-### Necessary Deliverables / Submission
-
-- Code must be in at least one clearly commented Jupyter Notebook.
-- A readme/executive summary in markdown.
-- You must submit your slide deck as a PDF.
-- Materials must be submitted by **10:00 AM (EST) on Wednesday, 7/10**.
-
----
-
-## Rubric
-Your instructors will evaluate your project (for the most part) using the following criteria.  You should make sure that you consider and/or follow most if not all of the considerations/recommendations outlined below **while** working through your project.
-
-For Project 3 the evaluation categories are as follows:<br>
-**The Data Science Process**
-- Problem Statement
-- Data Collection
-- Data Cleaning & EDA
-- Preprocessing & Modeling
-- Evaluation and Conceptual Understanding
-- Conclusion and Recommendations
-
-**Organization and Professionalism**
-- Organization
-- Visualizations
-- Python Syntax and Control Flow
-- Presentation
-
-**Scores will be out of 30 points based on the 10 categories in the rubric.** <br>
-*3 points per section*<br>
-
-| Score | Interpretation |
-| --- | --- |
-| **0** | *Project fails to meet the minimum requirements for this item.* |
-| **1** | *Project meets the minimum requirements for this item, but falls significantly short of portfolio-ready expectations.* |
-| **2** | *Project exceeds the minimum requirements for this item, but falls short of portfolio-ready expectations.* |
-| **3** | *Project meets or exceeds portfolio-ready expectations; demonstrates a thorough understanding of every outlined consideration.* |
-
-
-### The Data Science Process
-
-**Problem Statement**
-- Is it clear what the goal of the project is?
-- What type of model will be developed?
-- How will success be evaluated?
-- Is the scope of the project appropriate?
-- Is it clear who cares about this or why this is important to investigate?
-- Does the student consider the audience and the primary and secondary stakeholders?
-
-**Data Collection**
-- Was enough data gathered to generate a significant result? (At least 1000 posts per subreddit)
-- Was data collected that was useful and relevant to the project?
-- Was data collection and storage optimized through custom functions, pipelines, and/or automation?
-- Was thought given to the server receiving the requests such as considering number of requests per second?
-
-**Data Cleaning and EDA**
-- Are missing values imputed/handled appropriately?
-- Are distributions examined and described?
-- Are outliers identified and addressed?
-- Are appropriate summary statistics provided?
-- Are steps taken during data cleaning and EDA framed appropriately?
-- Does the student address whether or not they are likely to be able to answer their problem statement with the provided data given what they've discovered during EDA?
-
-**Preprocessing and Modeling**
-- Is text data successfully converted to a matrix representation?
-- Are methods such as stop words, stemming, and lemmatization explored?
-- Does the student properly split and/or sample the data for validation/training purposes?
-- Does the student test and evaluate a variety of models to identify a production algorithm (**AT MINIMUM:** two models)?
-- Does the student defend their choice of production model relevant to the data at hand and the problem?
-- Does the student explain how the model works and evaluate its performance successes/downfalls?
-
-**Evaluation and Conceptual Understanding**
-- Does the student accurately identify and explain the baseline score?
-- Does the student select and use metrics relevant to the problem objective?
-- Does the student interpret the results of their model for purposes of inference?
-- Is domain knowledge demonstrated when interpreting results?
-- Does the student provide appropriate interpretation with regards to descriptive and inferential statistics?
-
-**Conclusion and Recommendations**
-- Does the student provide appropriate context to connect individual steps back to the overall project?
-- Is it clear how the final recommendations were reached?
-- Are the conclusions/recommendations clearly stated?
-- Does the conclusion answer the original problem statement?
-- Does the student address how findings of this research can be applied for the benefit of stakeholders?
-- Are future steps to move the project forward identified?
-
-
-### Organization and Professionalism
-
-**Project Organization**
-- Are modules imported correctly (using appropriate aliases)?
-- Are data imported/saved using relative paths?
-- Does the README provide a good executive summary of the project?
-- Is markdown formatting used appropriately to structure notebooks?
-- Are there an appropriate amount of comments to support the code?
-- Are files & directories organized correctly?
-- Are there unnecessary files included?
-- Do files and directories have well-structured, appropriate, consistent names?
-
-**Visualizations**
-- Are sufficient visualizations provided?
-- Do plots accurately demonstrate valid relationships?
-- Are plots labeled properly?
-- Are plots interpreted appropriately?
-- Are plots formatted and scaled appropriately for inclusion in a notebook-based technical report?
-
-**Python Syntax and Control Flow**
-- Is care taken to write human readable code?
-- Is the code syntactically correct (no runtime errors)?
-- Does the code generate desired results (logically correct)?
-- Does the code follows general best practices and style guidelines?
-- Are Pandas functions used appropriately?
-- Are `sklearn` and `NLTK` methods used appropriately?
-
-**Presentation**
-- Is the problem statement clearly presented?
-- Does a strong narrative run through the presentation building toward a final conclusion?
-- Are the conclusions/recommendations clearly stated?
-- Is the level of technicality appropriate for the intended audience?
-- Is the student substantially over or under time?
-- Does the student appropriately pace their presentation?
-- Does the student deliver their message with clarity and volume?
-- Are appropriate visualizations generated for the intended audience?
-- Are visualizations necessary and useful for supporting conclusions/explaining findings?
-
-
----
-
-### Why did we choose this project for you?
-This project covers three of the biggest concepts we cover in the class: Classification Modeling, Natural Language Processing and Data Wrangling/Acquisition.
-
-Part 1 of the project focuses on **Data wrangling/gathering/acquisition**. This is a very important skill as not all the data you will need will be in clean CSVs or a single table in SQL.  There is a good chance that wherever you land you will have to gather some data from some unstructured/semi-structured sources; when possible, requesting information from an API, but sometimes scraping it because they don't have an API (or it's terribly documented).
-
-Part 2 of the project focuses on **Natural Language Processing** and converting standard text data (like Titles and Comments) into a format that allows us to analyze it and use it in modeling.
-
-Part 3 of the project focuses on **Classification Modeling**.  Given that project 2 was a regression focused problem, we needed to give you a classification focused problem to practice the various models, means of assessment and preprocessing associated with classification.   
+This adds on to the fact that perhaps posts on reddit wasn't the best data we could have used, for simple informal language, fed into a classification model, would create an overfit or oversimple model, which may work for this case scenario, but wouldn't be a great model in general, unadaptable, and specifically works for just the sourdough and pizza subreddits, which limits its use. Moving forward, making a multiclass classifier would perhaps be a worthy project to explore.
